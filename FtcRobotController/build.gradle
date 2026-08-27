@@ -27,4 +27,7 @@ android {
     namespace = 'com.qualcomm.ftcrobotcontroller'
 }
 
+// Workaround for Android Studio bug where it tries to run this task even in Groovy projects
+task prepareKotlinBuildScriptModel {}
+
 apply from: '../build.dependencies.gradle'
