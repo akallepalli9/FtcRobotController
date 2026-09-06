@@ -31,6 +31,7 @@ package org.firstinspires.ftc;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
@@ -111,6 +112,7 @@ public class AprilTagTracking extends LinearOpMode
     private DcMotor frontRightDrive = null;  //  Used to control the right front drive wheel
     private DcMotor backLeftDrive = null;  //  Used to control the left back drive wheel
     private DcMotor backRightDrive = null;  //  Used to control the right back drive wheel
+    private CRServo frontrightservo = null;       //  Intake servo
 
     private static final boolean USE_WEBCAM = true;  // Set true to use a webcam, or false for a phone camera
     private static final int DESIRED_TAG_ID = -1;     // Choose the tag you want to approach or set to -1 for ANY tag.
@@ -135,6 +137,7 @@ public class AprilTagTracking extends LinearOpMode
         frontRightDrive = hardwareMap.get(DcMotor.class, "frontrightmotor");
         backLeftDrive = hardwareMap.get(DcMotor.class, "backleftmotor");
         backRightDrive = hardwareMap.get(DcMotor.class, "backrightmotor");
+        frontrightservo = hardwareMap.get(CRServo.class, "frontrightservo");
 
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
@@ -213,12 +216,31 @@ public class AprilTagTracking extends LinearOpMode
                 strafe = Range.clip(-yawError * STRAFE_GAIN, -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
 
                 telemetry.addData("Auto","Drive %5.2f, Strafe %5.2f, Turn %5.2f ", drive, strafe, turn);
+            } else if (gamepad1.right_bumper && targetFound) {
+
+                // Custom Servo Power Equation: y = 0.68x + 5.19
+                double range = desiredTag.ftcPose.range;
+                double servoPower = (0.68 * range + 5.19) / 100.0;
+                servoPower = Range.clip(servoPower, -1.0, 1.0);
+
+                frontrightservo.setPower(servoPower);
+
+                // Stop the robot wheels while using the servo
+                drive  = 0;
+                turn   = 0;
+                strafe = 0;
+
+                telemetry.addData("Servo Mode (RB)", "Range: %5.2f, Servo Power: %5.2f", range, servoPower);
             } else {
 
                 // drive using manual POV Joystick mode.  Slow things down to make the robot more controlable.
                 drive  = -gamepad1.left_stick_y  / 2.0;  // Reduce drive rate to 50%.
                 strafe = -gamepad1.left_stick_x  / 2.0;  // Reduce strafe rate to 50%.
                 turn   = -gamepad1.right_stick_x / 3.0;  // Reduce turn rate to 33%.
+
+                // Ensure servo stops if RB is not pressed (if you want it to stop immediately)
+                frontrightservo.setPower(0);
+
                 telemetry.addData("Manual","Drive %5.2f, Strafe %5.2f, Turn %5.2f ", drive, strafe, turn);
             }
             telemetry.update();

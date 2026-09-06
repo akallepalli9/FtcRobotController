@@ -1,8 +1,4 @@
-repositories {
-    mavenCentral()
-    google() // Needed for androidx
-}
-
+// Dependencies are managed here
 dependencies {
     implementation 'org.firstinspires.ftc:Inspection:11.2.1'
     implementation 'org.firstinspires.ftc:Blocks:11.2.1'
