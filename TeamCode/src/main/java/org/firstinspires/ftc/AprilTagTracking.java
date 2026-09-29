@@ -112,6 +112,7 @@ public class AprilTagTracking extends LinearOpMode
     private DcMotor frontRightDrive = null;  //  Used to control the right front drive wheel
     private DcMotor backLeftDrive = null;  //  Used to control the left back drive wheel
     private DcMotor backRightDrive = null;  //  Used to control the right back drive wheel
+    private DcMotor shooterMotor = null;    //  Used to control 312 RPM shooter motor
     private CRServo frontrightservo = null;       //  Intake servo
 
     private static final boolean USE_WEBCAM = true;  // Set true to use a webcam, or false for a phone camera
@@ -137,7 +138,11 @@ public class AprilTagTracking extends LinearOpMode
         frontRightDrive = hardwareMap.get(DcMotor.class, "frontrightmotor");
         backLeftDrive = hardwareMap.get(DcMotor.class, "backleftmotor");
         backRightDrive = hardwareMap.get(DcMotor.class, "backrightmotor");
+        shooterMotor = hardwareMap.get(DcMotor.class, "shooter_motor");
         frontrightservo = hardwareMap.get(CRServo.class, "frontrightservo");
+
+        shooterMotor.setDirection(DcMotor.Direction.FORWARD);
+        shooterMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
@@ -243,6 +248,12 @@ public class AprilTagTracking extends LinearOpMode
 
                 telemetry.addData("Manual","Drive %5.2f, Strafe %5.2f, Turn %5.2f ", drive, strafe, turn);
             }
+
+            // Control 312 RPM shooter motor (e.g. using Right Trigger / Right Bumper or Gamepad 2 / Right Stick Y)
+            double shooterPower = gamepad1.right_trigger;
+            shooterMotor.setPower(shooterPower);
+            telemetry.addData("Shooter Motor Power", "%5.2f", shooterPower);
+
             telemetry.update();
 
             // Apply desired axes motions to the drivetrain.
