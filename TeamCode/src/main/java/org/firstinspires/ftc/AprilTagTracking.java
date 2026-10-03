@@ -49,46 +49,6 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-/*
- * This OpMode illustrates using a camera to locate and drive towards a specific AprilTag.
- * The code assumes a Holonomic (Mecanum or X Drive) Robot.
- *
- * For an introduction to AprilTags, see the ftc-docs link below:
- * https://ftc-docs.firstinspires.org/en/latest/apriltag/vision_portal/apriltag_intro/apriltag-intro.html
- *
- * When an AprilTag in the TagLibrary is detected, the SDK provides location and orientation of the tag, relative to the camera.
- * This information is provided in the "ftcPose" member of the returned "detection", and is explained in the ftc-docs page linked below.
- * https://ftc-docs.firstinspires.org/apriltag-detection-values
- *
- * The drive goal is to rotate to keep the Tag centered in the camera, while strafing to be directly in front of the tag, and
- * driving towards the tag to achieve the desired distance.
- * To reduce any motion blur (which will interrupt the detection process) the Camera exposure is reduced to a very low value (5mS)
- * You can determine the best Exposure and Gain values by using the ConceptAprilTagOptimizeExposure OpMode in this Samples folder.
- *
- * The code assumes a Robot Configuration with motors named: front_left_drive and front_right_drive, back_left_drive and back_right_drive.
- * The motor directions must be set so a positive power goes forward on all wheels.
- * This sample assumes that the current game AprilTag Library (usually for the current season) is being loaded by default,
- * so you should choose to approach a valid tag ID.
- *
- * Under manual control, the left stick will move forward/back & left/right.  The right stick will rotate the robot.
- * Manually drive the robot until it displays Target data on the Driver Station.
- *
- * Press and hold the *Left Bumper* to enable the automatic "Drive to target" mode.
- * Release the Left Bumper to return to manual driving mode.
- *
- * Under "Drive To Target" mode, the robot has three goals:
- * 1) Turn the robot to always keep the Tag centered on the camera frame. (Use the Target Bearing to turn the robot.)
- * 2) Strafe the robot towards the centerline of the Tag, so it approaches directly in front  of the tag.  (Use the Target Yaw to strafe the robot)
- * 3) Drive towards the Tag to get to the desired distance.  (Use Tag Range to drive the robot forward/backward)
- *
- * Use DESIRED_DISTANCE to set how close you want the robot to get to the target.
- * Speed and Turn sensitivity can be adjusted using the SPEED_GAIN, STRAFE_GAIN and TURN_GAIN constants.
- *
- * Use Android Studio to Copy this Class, and Paste it into the TeamCode/src/main/java/org/firstinspires/ftc/teamcode folder.
- * Remove or comment out the // @Disabled line to add this OpMode to the Driver Station OpMode list.
- *
- */
-
 @TeleOp(name="Mecanum Drive To AprilTag", group = "Concept")
 // @Disabled
 public class AprilTagTracking extends LinearOpMode
@@ -97,9 +57,6 @@ public class AprilTagTracking extends LinearOpMode
     double DISTANCE = 36;
     final double DESIRED_DISTANCE = (DISTANCE); //  this is how close the camera should get to the target (inches)
 
-    //  Set the GAIN constants to control the relationship between the measured position error, and how much power is
-    //  applied to the drive motors to correct the error.
-    //  Drive = Error * Gain    Make these values smaller for smoother control, or larger for a more aggressive response.
     final double SPEED_GAIN  =  0.02  ;   //  Forward Speed Control "Gain". e.g. Ramp up to 50% power at a 25 inch error.   (0.50 / 25.0)
     final double STRAFE_GAIN =  0.015 ;   //  Strafe Speed Control "Gain".  e.g. Ramp up to 37% power at a 25 degree Yaw error.   (0.375 / 25.0)
     final double TURN_GAIN   =  0.01  ;   //  Turn Control "Gain".  e.g. Ramp up to 25% power at a 25 degree error. (0.25 / 25.0)
@@ -132,25 +89,55 @@ public class AprilTagTracking extends LinearOpMode
         // Initialize the Apriltag Detection process
         initAprilTag();
 
-        // Initialize the hardware variables. Note that the strings used here as parameters
-        // to 'get' must match the names assigned during the robot configuration.-
-        // step (using the FTC Robot Controller app on the phone).
-        frontLeftDrive = hardwareMap.get(DcMotor.class, "frontleftmotor");
-        frontRightDrive = hardwareMap.get(DcMotor.class, "frontrightmotor");
-        backLeftDrive = hardwareMap.get(DcMotor.class, "backleftmotor");
-        backRightDrive = hardwareMap.get(DcMotor.class, "backrightmotor");
-        shooterMotor = hardwareMap.get(DcMotor.class, "shooter_motor");
-        transferMotor = hardwareMap.get(DcMotor.class, "transfer_motor");
-        frontrightservo = hardwareMap.get(CRServo.class, "frontrightservo");
+        // Safe Hardware Mapping: try to fetch each motor/servo so missing items don't crash OpMode
+        try {
+            frontLeftDrive = hardwareMap.get(DcMotor.class, "frontleftmotor");
+            frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        } catch (Exception e) {
+            telemetry.addData("Config Warning", "Missing 'frontleftmotor'");
+        }
 
-        shooterMotor.setDirection(DcMotor.Direction.FORWARD);
-        shooterMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        transferMotor.setDirection(DcMotor.Direction.FORWARD);
-        transferMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        try {
+            frontRightDrive = hardwareMap.get(DcMotor.class, "frontrightmotor");
+            frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
+        } catch (Exception e) {
+            telemetry.addData("Config Warning", "Missing 'frontrightmotor'");
+        }
 
-        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
-        backRightDrive.setDirection(DcMotor.Direction.REVERSE);
+        try {
+            backLeftDrive = hardwareMap.get(DcMotor.class, "backleftmotor");
+        } catch (Exception e) {
+            telemetry.addData("Config Warning", "Missing 'backleftmotor'");
+        }
+
+        try {
+            backRightDrive = hardwareMap.get(DcMotor.class, "backrightmotor");
+            backRightDrive.setDirection(DcMotor.Direction.REVERSE);
+        } catch (Exception e) {
+            telemetry.addData("Config Warning", "Missing 'backrightmotor'");
+        }
+
+        try {
+            shooterMotor = hardwareMap.get(DcMotor.class, "shooter_motor");
+            shooterMotor.setDirection(DcMotor.Direction.FORWARD);
+            shooterMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        } catch (Exception e) {
+            telemetry.addData("Config Warning", "Missing 'shooter_motor'");
+        }
+
+        try {
+            transferMotor = hardwareMap.get(DcMotor.class, "transfer_motor");
+            transferMotor.setDirection(DcMotor.Direction.FORWARD);
+            transferMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        } catch (Exception e) {
+            telemetry.addData("Config Warning", "Missing 'transfer_motor'");
+        }
+
+        try {
+            frontrightservo = hardwareMap.get(CRServo.class, "frontrightservo");
+        } catch (Exception e) {
+            telemetry.addData("Config Warning", "Missing 'frontrightservo'");
+        }
 
         if (USE_WEBCAM)
             setManualExposure(6, 250);  // Use low exposure time to reduce motion blur
@@ -170,20 +157,15 @@ public class AprilTagTracking extends LinearOpMode
             // Step through the list of detected tags and look for a matching tag
             List<AprilTagDetection> currentDetections = aprilTag.getDetections();
             for (AprilTagDetection detection : currentDetections) {
-                // Look to see if we have size info on this tag.
                 if (detection.metadata != null) {
-                    //  Check to see if we want to track towards this tag.
                     if ((DESIRED_TAG_ID < 0) || (detection.id == DESIRED_TAG_ID)) {
-                        // Yes, we want to use this tag.
                         targetFound = true;
                         desiredTag = detection;
                         break;  // don't look any further.
                     } else {
-                        // This tag is in the library, but we do not want to track it right now.
                         telemetry.addData("Skipping", "Tag ID %d is not desired", detection.id);
                     }
                 } else {
-                    // This tag is NOT in the library, so we don't have enough information to track to it.
                     telemetry.addData("Unknown", "Tag ID %d is not in TagLibrary", detection.id);
                 }
             }
@@ -211,12 +193,10 @@ public class AprilTagTracking extends LinearOpMode
             // If Left Bumper is being pressed, AND we have found the desired target, Drive to target Automatically .
             if (gamepad1.left_bumper && targetFound) {
 
-                // Determine heading, range and Yaw (tag image rotation) error so we can use them to control the robot automatically.
                 double  rangeError      = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
                 double  headingError    = desiredTag.ftcPose.bearing;
                 double  yawError        = desiredTag.ftcPose.yaw;
 
-                // Use the speed and turn "gains" to calculate how we want the robot to move.
                 drive  = Range.clip(rangeError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
                 turn   = Range.clip(headingError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN) ;
                 strafe = Range.clip(-yawError * STRAFE_GAIN, -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
@@ -229,9 +209,8 @@ public class AprilTagTracking extends LinearOpMode
                 double servoPower = (0.68 * range + 5.19) / 100.0;
                 servoPower = Range.clip(servoPower, -1.0, 1.0);
 
-                frontrightservo.setPower(servoPower);
+                if (frontrightservo != null) frontrightservo.setPower(servoPower);
 
-                // Stop the robot wheels while using the servo
                 drive  = 0;
                 turn   = 0;
                 strafe = 0;
@@ -244,17 +223,30 @@ public class AprilTagTracking extends LinearOpMode
                 strafe = -gamepad1.left_stick_x  / 2.0;  // Reduce strafe rate to 50%.
                 turn   = -gamepad1.right_stick_x / 3.0;  // Reduce turn rate to 33%.
 
-                // Ensure servo stops if RB is not pressed (if you want it to stop immediately)
-               // frontrightservo.setPower(0);
+                if (frontrightservo != null) {
+                    frontrightservo.setPower(0);
+                }
 
                 telemetry.addData("Manual","Drive %5.2f, Strafe %5.2f, Turn %5.2f ", drive, strafe, turn);
             }
 
-            // Control 312 RPM shooter motor & transfer motor together using Right Trigger
-            double shooterPower = gamepad1.right_trigger;
-            shooterMotor.setPower(shooterPower);
-            transferMotor.setPower(shooterPower);
-            telemetry.addData("Shooter & Transfer Power", "%5.2f", shooterPower);
+            // Control 312 RPM shooter motor & transfer motor together using Right Trigger or A Button (Gamepad 1 or Gamepad 2)
+            double shooterPower = Math.max(gamepad1.right_trigger, gamepad2.right_trigger);
+
+            // Also check A button on either controller for 100% full power testing
+            if (gamepad1.a || gamepad2.a) {
+                shooterPower = 1.0;
+            }
+
+            if (shooterMotor != null) {
+                shooterMotor.setPower(shooterPower);
+            }
+            if (transferMotor != null) {
+                transferMotor.setPower(shooterPower);
+            }
+
+            telemetry.addData("Shooter/Transfer Power", "%5.2f (G1 Trigger: %5.2f, G2 Trigger: %5.2f)",
+                    shooterPower, gamepad1.right_trigger, gamepad2.right_trigger);
 
             telemetry.update();
 
@@ -266,12 +258,6 @@ public class AprilTagTracking extends LinearOpMode
 
     /**
      * Move robot according to desired axes motions
-     * <p>
-     * Positive X is forward
-     * <p>
-     * Positive Y is strafe left
-     * <p>
-     * Positive Yaw is counter-clockwise
      */
     public void moveRobot(double x, double y, double yaw) {
         // Calculate wheel powers.
@@ -292,24 +278,20 @@ public class AprilTagTracking extends LinearOpMode
             backRightPower /= max;
         }
 
-        // Send powers to the wheels.
-        frontLeftDrive.setPower(frontLeftPower);
-        frontRightDrive.setPower(frontRightPower);
-        backLeftDrive.setPower(backLeftPower);
-        backRightDrive.setPower(backRightPower);
+        // Send powers to the wheels safely
+        if (frontLeftDrive != null) frontLeftDrive.setPower(frontLeftPower);
+        if (frontRightDrive != null) frontRightDrive.setPower(frontRightPower);
+        if (backLeftDrive != null) backLeftDrive.setPower(backLeftPower);
+        if (backRightDrive != null) backRightDrive.setPower(backRightPower);
     }
 
     /**
      * Initialize the AprilTag processor.
      */
     private void initAprilTag() {
-        // Create the AprilTag library by using a builder.
         AprilTagLibrary.Builder tagLibraryBuilder = new AprilTagLibrary.Builder();
-
-        // Add the official FTC game tags to the builder
         tagLibraryBuilder.addTags(AprilTagGameDatabase.getCurrentGameTagLibrary());
 
-        // Override or add tags 0-19 with the custom 6.75 inch size
         for (int id = 0; id < 20; id++) {
             tagLibraryBuilder.addTag(
                     id,
@@ -319,7 +301,6 @@ public class AprilTagTracking extends LinearOpMode
         }
         AprilTagLibrary tagLibrary = tagLibraryBuilder.build();
 
-        // Create the AprilTag processor by using a builder.
         aprilTag = new AprilTagProcessor.Builder()
                 .setDrawAxes(false)
                 .setDrawCubeProjection(false)
@@ -329,10 +310,8 @@ public class AprilTagTracking extends LinearOpMode
                 .setOutputUnits(DistanceUnit.INCH, AngleUnit.DEGREES)
                 .build();
 
-        // Adjust Image Decimation to trade-off detection-range for detection-rate.
         aprilTag.setDecimation(3);
 
-        // Create the vision portal by using a builder.
         if (USE_WEBCAM) {
             visionPortal = new VisionPortal.Builder()
                     .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
@@ -349,16 +328,12 @@ public class AprilTagTracking extends LinearOpMode
 
     /*
      Manually set the camera gain and exposure.
-     This can only be called AFTER calling initAprilTag(), and only works for Webcams;
     */
-    private void    setManualExposure(int exposureMS, int gain) {
-        // Wait for the camera to be open, then use the controls
-
+    private void setManualExposure(int exposureMS, int gain) {
         if (visionPortal == null) {
             return;
         }
 
-        // Make sure camera is streaming before we try to set the exposure controls
         if (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING) {
             telemetry.addData("Camera", "Waiting");
             telemetry.update();
@@ -369,7 +344,6 @@ public class AprilTagTracking extends LinearOpMode
             telemetry.update();
         }
 
-        // Set camera controls unless we are stopping.
         if (!isStopRequested())
         {
             ExposureControl exposureControl = visionPortal.getCameraControl(ExposureControl.class);
