@@ -238,8 +238,8 @@ public class AprilTagTracking extends LinearOpMode
                 telemetry.addData("Servo Mode (RB)", "Range: %5.2f, Servo Power: %5.2f", range, servoPower);
             } else {
 
-                // drive using manual POV Joystick mode.  Slow things down to make the robot more controlable.
-                drive  = -gamepad1.left_stick_y  / 2.0;  // Reduce drive rate to 50%.
+                // Drive using Left Trigger for forward drive instead of left stick Y.
+                drive  = gamepad1.left_trigger;          // Drive forward based on Left Trigger analog squeeze (0.0 to 1.0)
                 strafe = -gamepad1.left_stick_x  / 2.0;  // Reduce strafe rate to 50%.
                 turn   = -gamepad1.right_stick_x / 3.0;  // Reduce turn rate to 33%.
 
