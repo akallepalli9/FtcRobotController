@@ -134,12 +134,12 @@ public class AprilTagTracking extends LinearOpMode
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must match the names assigned during the robot configuration.-
         // step (using the FTC Robot Controller app on the phone).
-        frontLeftDrive = hardwareMap.get(DcMotor.class, "frontleftmotor");
-        frontRightDrive = hardwareMap.get(DcMotor.class, "frontrightmotor");
-        backLeftDrive = hardwareMap.get(DcMotor.class, "backleftmotor");
+        //frontLeftDrive = hardwareMap.get(DcMotor.class, "frontleftmotor");
+        //frontRightDrive = hardwareMap.get(DcMotor.class, "frontrightmotor");
+        //backLeftDrive = hardwareMap.get(DcMotor.class, "backleftmotor");
         backRightDrive = hardwareMap.get(DcMotor.class, "backrightmotor");
         shooterMotor = hardwareMap.get(DcMotor.class, "shooter_motor");
-        frontrightservo = hardwareMap.get(CRServo.class, "frontrightservo");
+        //frontrightservo = hardwareMap.get(CRServo.class, "frontrightservo");
 
         shooterMotor.setDirection(DcMotor.Direction.FORWARD);
         shooterMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -147,9 +147,9 @@ public class AprilTagTracking extends LinearOpMode
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
-        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
-        backRightDrive.setDirection(DcMotor.Direction.REVERSE);
+       // frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+       // frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
+       // backRightDrive.setDirection(DcMotor.Direction.REVERSE);
 
         if (USE_WEBCAM)
             setManualExposure(6, 250);  // Use low exposure time to reduce motion blur
@@ -238,13 +238,20 @@ public class AprilTagTracking extends LinearOpMode
                 telemetry.addData("Servo Mode (RB)", "Range: %5.2f, Servo Power: %5.2f", range, servoPower);
             } else {
 
-                // Drive using Left Trigger for forward drive instead of left stick Y.
+                // Drive using Left Trigger for forward drive
                 drive  = gamepad1.left_trigger;          // Drive forward based on Left Trigger analog squeeze (0.0 to 1.0)
                 strafe = -gamepad1.left_stick_x  / 2.0;  // Reduce strafe rate to 50%.
                 turn   = -gamepad1.right_stick_x / 3.0;  // Reduce turn rate to 33%.
 
-                // Ensure servo stops if RB is not pressed (if you want it to stop immediately)
-                frontrightservo.setPower(0);
+                // Calculate servo power based on AprilTag distance if target found, otherwise match left trigger
+                if (targetFound) {
+                    double range = desiredTag.ftcPose.range;
+                    double servoPower = (0.68 * range + 5.19) / 100.0;
+                    servoPower = Range.clip(servoPower, -1.0, 1.0);
+                    frontrightservo.setPower(gamepad1.left_trigger > 0.05 ? servoPower : 0);
+                } else {
+                    frontrightservo.setPower(gamepad1.left_trigger);
+                }
 
                 telemetry.addData("Manual","Drive %5.2f, Strafe %5.2f, Turn %5.2f ", drive, strafe, turn);
             }
@@ -291,9 +298,9 @@ public class AprilTagTracking extends LinearOpMode
         }
 
         // Send powers to the wheels.
-        frontLeftDrive.setPower(frontLeftPower);
-        frontRightDrive.setPower(frontRightPower);
-        backLeftDrive.setPower(backLeftPower);
+        //frontLeftDrive.setPower(frontLeftPower);
+        //frontRightDrive.setPower(frontRightPower);
+        //backLeftDrive.setPower(backLeftPower);
         backRightDrive.setPower(backRightPower);
     }
 
