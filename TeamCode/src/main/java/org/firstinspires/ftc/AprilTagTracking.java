@@ -242,8 +242,8 @@ public class AprilTagTracking extends LinearOpMode
                 strafe = -gamepad1.left_stick_x  / 2.0;  // Reduce strafe rate to 50%.
                 turn   = -gamepad1.right_stick_x / 3.0;  // Reduce turn rate to 33%.
 
-                // Ensure servo stops if RB is not pressed (if you want it to stop immediately)
-               // frontrightservo.setPower(0);
+                // Ensure servo stops if RB is not pressed
+                frontrightservo.setPower(0);
 
                 telemetry.addData("Manual","Drive %5.2f, Strafe %5.2f, Turn %5.2f ", drive, strafe, turn);
             }
