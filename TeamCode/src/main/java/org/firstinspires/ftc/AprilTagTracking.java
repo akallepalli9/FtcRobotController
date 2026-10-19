@@ -107,13 +107,16 @@ public class AprilTagTracking extends LinearOpMode
     final double MAX_AUTO_SPEED = 0.5;   //  Clip the approach speed to this max value (adjust for your robot)
     final double MAX_AUTO_STRAFE= 0.5;   //  Clip the strafing speed to this max value (adjust for your robot)
     final double MAX_AUTO_TURN  = 0.3;   //  Clip the turn speed to this max value (adjust for your robot)
+    final double MAX_SHOOTER_POWER = 0.55; //  Max power for the shooter motor (62%)
 
     private DcMotor frontLeftDrive = null;  //  Used to control the left front drive wheel
     private DcMotor frontRightDrive = null;  //  Used to control the right front drive wheel
     private DcMotor backLeftDrive = null;  //  Used to control the left back drive wheel
     private DcMotor backRightDrive = null;  //  Used to control the right back drive wheel
-    private DcMotor shooterMotor = null;    //  Used to control 312 RPM shooter motor
-    private DcMotor transferMotor = null;   //  Used to control transfer motor
+    private DcMotor shooterMotor = null;//  Used to control 312 RPM shooter motor
+
+    private DcMotor intakeMotor = null;
+    private DcMotor transferMotor = null;//  Used to control transfer motor
     private CRServo frontrightservo = null;       //  Intake servo
 
     private static final boolean USE_WEBCAM = true;  // Set true to use a webcam, or false for a phone camera
@@ -133,22 +136,26 @@ public class AprilTagTracking extends LinearOpMode
         initAprilTag();
 
         // Initialize hardware mapping for all drive motors, shooter motor, transfer motor, and intake servo
-        frontLeftDrive = hardwareMap.get(DcMotor.class, "frontleftmotor");
-        frontRightDrive = hardwareMap.get(DcMotor.class, "frontrightmotor");
-        backLeftDrive = hardwareMap.get(DcMotor.class, "backleftmotor");
-        backRightDrive = hardwareMap.get(DcMotor.class, "backrightmotor");
+       // frontLeftDrive = hardwareMap.get(DcMotor.class, "frontleftmotor");
+       // frontRightDrive = hardwareMap.get(DcMotor.class, "frontrightmotor");
+       // backLeftDrive = hardwareMap.get(DcMotor.class, "backleftmotor");
+        intakeMotor = hardwareMap.get(DcMotor.class, "intake_motor");
         shooterMotor = hardwareMap.get(DcMotor.class, "shooter_motor");
         transferMotor = hardwareMap.get(DcMotor.class, "transfer_motor");
-        frontrightservo = hardwareMap.get(CRServo.class, "frontrightservo");
+       // frontrightservo = hardwareMap.get(CRServo.class, "frontrightservo");
 
         shooterMotor.setDirection(DcMotor.Direction.FORWARD);
         shooterMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        transferMotor.setDirection(DcMotor.Direction.FORWARD);
-        transferMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
-        backRightDrive.setDirection(DcMotor.Direction.REVERSE);
+        transferMotor.setDirection(DcMotor.Direction.REVERSE);
+        transferMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        
+        intakeMotor.setDirection(DcMotor.Direction.REVERSE);
+        intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        //frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        //frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
+
 
         if (USE_WEBCAM)
             setManualExposure(6, 250);  // Use low exposure time to reduce motion blur
@@ -227,7 +234,9 @@ public class AprilTagTracking extends LinearOpMode
                 double servoPower = (0.68 * range + 5.19) / 100.0;
                 servoPower = Range.clip(servoPower, -1.0, 1.0);
 
-                frontrightservo.setPower(servoPower);
+                if (frontrightservo != null) {
+                    frontrightservo.setPower(servoPower);
+                }
 
                 // Stop the robot wheels while using the servo
                 drive  = 0;
@@ -242,16 +251,17 @@ public class AprilTagTracking extends LinearOpMode
                 strafe = -gamepad1.left_stick_x  / 2.0;  // Reduce strafe rate to 50%.
                 turn   = -gamepad1.right_stick_x / 3.0;  // Reduce turn rate to 33%.
 
-                // Ensure servo stops if RB is not pressed
-                frontrightservo.setPower(0);
+                // Ensure servo stops if RB is not pressed (if you want it to stop immediately)
+               // frontrightservo.setPower(0);
 
                 telemetry.addData("Manual","Drive %5.2f, Strafe %5.2f, Turn %5.2f ", drive, strafe, turn);
             }
 
-            // Control 312 RPM shooter motor & transfer motor together using Right Trigger
-            double shooterPower = gamepad1.right_trigger;
+            // Control 312 RPM shooter motor & transfer motor together using Right Trigger scaled to MAX_SHOOTER_POWER (0.62)
+            double shooterPower = gamepad1.right_trigger * MAX_SHOOTER_POWER;
             shooterMotor.setPower(shooterPower);
             transferMotor.setPower(shooterPower);
+            intakeMotor.setPower(shooterPower);
             telemetry.addData("Shooter & Transfer Power", "%5.2f", shooterPower);
 
             telemetry.update();
@@ -291,10 +301,10 @@ public class AprilTagTracking extends LinearOpMode
         }
 
         // Send powers to the wheels.
-        frontLeftDrive.setPower(frontLeftPower);
-        frontRightDrive.setPower(frontRightPower);
-        backLeftDrive.setPower(backLeftPower);
-        backRightDrive.setPower(backRightPower);
+        //frontLeftDrive.setPower(frontLeftPower);
+        //frontRightDrive.setPower(frontRightPower);
+        //backLeftDrive.setPower(backLeftPower);
+        //backRightDrive.setPower(backRightPower);
     }
 
     /**

@@ -17,19 +17,19 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 public class SingleMotorTeleOp extends LinearOpMode {
 
     // Declare the motor variable
-    private DcMotor testMotor = null;
+    private DcMotor shooter_motor = null;
 
     @Override
     public void runOpMode() {
 
         // Initialize the hardware map. The string "testMotor" must match the configuration on the Driver Station.
-        testMotor = hardwareMap.get(DcMotor.class, "testMotor");
+        shooter_motor = hardwareMap.get(DcMotor.class, "shooter_motor");
 
         // Optional: Set motor direction (FORWARD or REVERSE depending on mounting)
-        testMotor.setDirection(DcMotor.Direction.FORWARD);
+        shooter_motor.setDirection(DcMotor.Direction.FORWARD);
 
         // Set brake mode so the motor stops immediately when power is set to 0
-        testMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        shooter_motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // Send telemetry message to signify robot waiting
         telemetry.addData("Status", "Initialized. Ready to start!");
@@ -50,11 +50,11 @@ public class SingleMotorTeleOp extends LinearOpMode {
             double motorPower = -gamepad1.left_stick_y;
 
             // Apply power to the motor
-            testMotor.setPower(motorPower);
+           shooter_motor.setPower(motorPower);
 
             // Display telemetry data
             telemetry.addData("Motor Power", "%5.2f", motorPower);
-            telemetry.addData("Target Motor", "312 RPM Motor ('testMotor')");
+            telemetry.addData("Target Motor", "312 RPM Motor ('shooter_motor')");
             telemetry.update();
         }
     }
