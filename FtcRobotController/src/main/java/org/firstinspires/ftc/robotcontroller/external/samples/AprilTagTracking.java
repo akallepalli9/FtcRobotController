@@ -64,7 +64,7 @@ public class AprilTagTracking extends LinearOpMode
     final double MAX_AUTO_SPEED = 0.5;   //  Clip the approach speed to this max value (adjust for your robot)
     final double MAX_AUTO_STRAFE= 0.5;   //  Clip the strafing speed to this max value (adjust for your robot)
     final double MAX_AUTO_TURN  = 0.3;   //  Clip the turn speed to this max value (adjust for your robot)
-    final double MAX_SHOOTER_POWER = 0.62; //  Max power for the shooter motor (62%)
+    final double MAX_SHOOTER_POWER = 0.51; //  Max power for the shooter motor (51%)
 
     private DcMotor frontLeftDrive = null;  //  Used to control the left front drive wheel
     private DcMotor frontRightDrive = null;  //  Used to control the right front drive wheel
@@ -164,28 +164,38 @@ public class AprilTagTracking extends LinearOpMode
                 telemetry.addData("Auto","Drive %5.2f, Strafe %5.2f, Turn %5.2f ", drive, strafe, turn);
             } else {
 
-                drive  = gamepad1.left_trigger;
+                drive  = -gamepad1.left_stick_y;
                 strafe = -gamepad1.left_stick_x  / 2.0;
                 turn   = -gamepad1.right_stick_x / 3.0;
 
                 telemetry.addData("Manual","Drive %5.2f, Strafe %5.2f, Turn %5.2f ", drive, strafe, turn);
             }
 
-            // Right Bumper = Shooter motor ONLY
-            // Right Trigger = Shooter, Transfer & Intake synced
+            // Mechanism Controls:
+            // Right Bumper = Shooter motor ONLY (0.51)
+            // Right Trigger = Shooter (0.51 max), Transfer (1.0), Intake (0.51 max)
+            // Left Trigger = Intake ONLY (1.0)
             if (gamepad1.right_bumper) {
                 shooterMotor.setPower(MAX_SHOOTER_POWER);
                 transferMotor.setPower(0);
                 intakeMotor.setPower(0);
                 telemetry.addData("Shooter Only Mode (RB)", "%5.2f", MAX_SHOOTER_POWER);
-            } else {
+            } else if (gamepad1.right_trigger > 0) {
                 double shooterPower = gamepad1.right_trigger * MAX_SHOOTER_POWER;
-                double transferPower = gamepad1.right_trigger > 0 ? 1.0 : 0.0;
                 shooterMotor.setPower(shooterPower);
-                transferMotor.setPower(transferPower);
+                transferMotor.setPower(1.0);
                 intakeMotor.setPower(shooterPower);
                 telemetry.addData("Shooter Power", "%5.2f", shooterPower);
-                telemetry.addData("Transfer Power", "%5.2f", transferPower);
+                telemetry.addData("Transfer Power", "1.00");
+            } else if (gamepad1.left_trigger > 0) {
+                shooterMotor.setPower(0);
+                transferMotor.setPower(0);
+                intakeMotor.setPower(1.0);
+                telemetry.addData("Intake Mode (LT)", "1.00");
+            } else {
+                shooterMotor.setPower(0);
+                transferMotor.setPower(0);
+                intakeMotor.setPower(0);
             }
 
             telemetry.update();

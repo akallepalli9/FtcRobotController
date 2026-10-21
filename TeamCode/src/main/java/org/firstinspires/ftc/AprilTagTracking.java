@@ -229,29 +229,39 @@ public class AprilTagTracking extends LinearOpMode
                 telemetry.addData("Auto","Drive %5.2f, Strafe %5.2f, Turn %5.2f ", drive, strafe, turn);
             } else {
 
-                // Drive using Left Trigger for forward drive instead of left stick Y.
-                drive  = gamepad1.left_trigger;          // Drive forward based on Left Trigger analog squeeze (0.0 to 1.0)
+                // Drive using Left Stick Y for forward/back drive
+                drive  = -gamepad1.left_stick_y;          // Drive forward/backward based on Left Stick Y
                 strafe = -gamepad1.left_stick_x  / 2.0;  // Reduce strafe rate to 50%.
                 turn   = -gamepad1.right_stick_x / 3.0;  // Reduce turn rate to 33%.
 
                 telemetry.addData("Manual","Drive %5.2f, Strafe %5.2f, Turn %5.2f ", drive, strafe, turn);
             }
 
-            // Right Bumper = Shooter motor ONLY
-            // Right Trigger = Shooter, Transfer & Intake synced
+            // Mechanism Controls:
+            // Right Bumper = Shooter motor ONLY (0.51)
+            // Right Trigger = Shooter (0.51 max), Transfer (1.0), Intake (0.51 max)
+            // Left Trigger = Intake ONLY (1.0)
             if (gamepad1.right_bumper) {
                 shooterMotor.setPower(MAX_SHOOTER_POWER);
                 transferMotor.setPower(0);
                 intakeMotor.setPower(0);
                 telemetry.addData("Shooter Only Mode (RB)", "%5.2f", MAX_SHOOTER_POWER);
-            } else {
+            } else if (gamepad1.right_trigger > 0) {
                 double shooterPower = gamepad1.right_trigger * MAX_SHOOTER_POWER;
-                double transferPower = gamepad1.right_trigger > 0 ? 1.0 : 0.0;
                 shooterMotor.setPower(shooterPower);
-                transferMotor.setPower(transferPower);
+                transferMotor.setPower(1.0);
                 intakeMotor.setPower(shooterPower);
                 telemetry.addData("Shooter Power", "%5.2f", shooterPower);
-                telemetry.addData("Transfer Power", "%5.2f", transferPower);
+                telemetry.addData("Transfer Power", "1.00");
+            } else if (gamepad1.left_trigger > 0) {
+                shooterMotor.setPower(0);
+                transferMotor.setPower(0);
+                intakeMotor.setPower(1.0);
+                telemetry.addData("Intake Mode (LT)", "1.00");
+            } else {
+                shooterMotor.setPower(0);
+                transferMotor.setPower(0);
+                intakeMotor.setPower(0);
             }
 
             telemetry.update();
