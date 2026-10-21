@@ -162,21 +162,6 @@ public class AprilTagTracking extends LinearOpMode
                 strafe = Range.clip(-yawError * STRAFE_GAIN, -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
 
                 telemetry.addData("Auto","Drive %5.2f, Strafe %5.2f, Turn %5.2f ", drive, strafe, turn);
-            } else if (gamepad1.right_bumper && targetFound) {
-
-                double range = desiredTag.ftcPose.range;
-                double servoPower = (0.68 * range + 5.19) / 100.0;
-                servoPower = Range.clip(servoPower, -1.0, 1.0);
-
-                if (frontrightservo != null) {
-                    frontrightservo.setPower(servoPower);
-                }
-
-                drive  = 0;
-                turn   = 0;
-                strafe = 0;
-
-                telemetry.addData("Servo Mode (RB)", "Range: %5.2f, Servo Power: %5.2f", range, servoPower);
             } else {
 
                 drive  = gamepad1.left_trigger;
@@ -186,11 +171,20 @@ public class AprilTagTracking extends LinearOpMode
                 telemetry.addData("Manual","Drive %5.2f, Strafe %5.2f, Turn %5.2f ", drive, strafe, turn);
             }
 
-            double shooterPower = gamepad1.right_trigger * MAX_SHOOTER_POWER;
-            shooterMotor.setPower(shooterPower);
-            transferMotor.setPower(shooterPower);
-            intakeMotor.setPower(shooterPower);
-            telemetry.addData("Shooter & Transfer Power", "%5.2f", shooterPower);
+            // Right Bumper = Shooter motor ONLY
+            // Right Trigger = Shooter, Transfer & Intake synced
+            if (gamepad1.right_bumper) {
+                shooterMotor.setPower(MAX_SHOOTER_POWER);
+                transferMotor.setPower(0);
+                intakeMotor.setPower(0);
+                telemetry.addData("Shooter Only Mode (RB)", "%5.2f", MAX_SHOOTER_POWER);
+            } else {
+                double shooterPower = gamepad1.right_trigger * MAX_SHOOTER_POWER;
+                shooterMotor.setPower(shooterPower);
+                transferMotor.setPower(shooterPower);
+                intakeMotor.setPower(shooterPower);
+                telemetry.addData("Shooter & Transfer Power", "%5.2f", shooterPower);
+            }
 
             telemetry.update();
 

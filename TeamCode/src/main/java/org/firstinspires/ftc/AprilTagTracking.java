@@ -227,23 +227,6 @@ public class AprilTagTracking extends LinearOpMode
                 strafe = Range.clip(-yawError * STRAFE_GAIN, -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
 
                 telemetry.addData("Auto","Drive %5.2f, Strafe %5.2f, Turn %5.2f ", drive, strafe, turn);
-            } else if (gamepad1.right_bumper && targetFound) {
-
-                // Custom Servo Power Equation: y = 0.68x + 5.19
-                double range = desiredTag.ftcPose.range;
-                double servoPower = (0.68 * range + 5.19) / 100.0;
-                servoPower = Range.clip(servoPower, -1.0, 1.0);
-
-                if (frontrightservo != null) {
-                    frontrightservo.setPower(servoPower);
-                }
-
-                // Stop the robot wheels while using the servo
-                drive  = 0;
-                turn   = 0;
-                strafe = 0;
-
-                telemetry.addData("Servo Mode (RB)", "Range: %5.2f, Servo Power: %5.2f", range, servoPower);
             } else {
 
                 // Drive using Left Trigger for forward drive instead of left stick Y.
@@ -251,18 +234,23 @@ public class AprilTagTracking extends LinearOpMode
                 strafe = -gamepad1.left_stick_x  / 2.0;  // Reduce strafe rate to 50%.
                 turn   = -gamepad1.right_stick_x / 3.0;  // Reduce turn rate to 33%.
 
-                // Ensure servo stops if RB is not pressed (if you want it to stop immediately)
-               // frontrightservo.setPower(0);
-
                 telemetry.addData("Manual","Drive %5.2f, Strafe %5.2f, Turn %5.2f ", drive, strafe, turn);
             }
 
-            // Control 312 RPM shooter motor & transfer motor together using Right Trigger scaled to MAX_SHOOTER_POWER (0.62)
-            double shooterPower = gamepad1.right_trigger * MAX_SHOOTER_POWER;
-            shooterMotor.setPower(shooterPower);
-            transferMotor.setPower(shooterPower);
-            intakeMotor.setPower(shooterPower);
-            telemetry.addData("Shooter & Transfer Power", "%5.2f", shooterPower);
+            // Right Bumper = Shooter motor ONLY
+            // Right Trigger = Shooter, Transfer & Intake synced
+            if (gamepad1.right_bumper) {
+                shooterMotor.setPower(MAX_SHOOTER_POWER);
+                transferMotor.setPower(0);
+                intakeMotor.setPower(0);
+                telemetry.addData("Shooter Only Mode (RB)", "%5.2f", MAX_SHOOTER_POWER);
+            } else {
+                double shooterPower = gamepad1.right_trigger * MAX_SHOOTER_POWER;
+                shooterMotor.setPower(shooterPower);
+                transferMotor.setPower(shooterPower);
+                intakeMotor.setPower(shooterPower);
+                telemetry.addData("Shooter & Transfer Power", "%5.2f", shooterPower);
+            }
 
             telemetry.update();
 
