@@ -180,10 +180,12 @@ public class AprilTagTracking extends LinearOpMode
                 telemetry.addData("Shooter Only Mode (RB)", "%5.2f", MAX_SHOOTER_POWER);
             } else {
                 double shooterPower = gamepad1.right_trigger * MAX_SHOOTER_POWER;
+                double transferPower = gamepad1.right_trigger > 0 ? 1.0 : 0.0;
                 shooterMotor.setPower(shooterPower);
-                transferMotor.setPower(shooterPower);
+                transferMotor.setPower(transferPower);
                 intakeMotor.setPower(shooterPower);
-                telemetry.addData("Shooter & Transfer Power", "%5.2f", shooterPower);
+                telemetry.addData("Shooter Power", "%5.2f", shooterPower);
+                telemetry.addData("Transfer Power", "%5.2f", transferPower);
             }
 
             telemetry.update();
