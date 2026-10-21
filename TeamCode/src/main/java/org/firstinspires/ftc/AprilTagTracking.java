@@ -239,20 +239,18 @@ public class AprilTagTracking extends LinearOpMode
 
             // Mechanism Controls:
             // Right Bumper = Shooter motor ONLY (0.51)
-            // Right Trigger = Shooter (0.51 max), Transfer (1.0), Intake (0.51 max)
-            // Left Trigger = Intake ONLY (1.0)
+            // Right Trigger = Transfer motor ONLY (1.0)
+            // Left Trigger = Intake motor ONLY (1.0)
             if (gamepad1.right_bumper) {
                 shooterMotor.setPower(MAX_SHOOTER_POWER);
                 transferMotor.setPower(0);
                 intakeMotor.setPower(0);
-                telemetry.addData("Shooter Only Mode (RB)", "%5.2f", MAX_SHOOTER_POWER);
+                telemetry.addData("Shooter Mode (RB)", "%5.2f", MAX_SHOOTER_POWER);
             } else if (gamepad1.right_trigger > 0) {
-                double shooterPower = gamepad1.right_trigger * MAX_SHOOTER_POWER;
-                shooterMotor.setPower(shooterPower);
+                shooterMotor.setPower(0);
                 transferMotor.setPower(1.0);
-                intakeMotor.setPower(shooterPower);
-                telemetry.addData("Shooter Power", "%5.2f", shooterPower);
-                telemetry.addData("Transfer Power", "1.00");
+                intakeMotor.setPower(0);
+                telemetry.addData("Transfer Mode (RT)", "1.00");
             } else if (gamepad1.left_trigger > 0) {
                 shooterMotor.setPower(0);
                 transferMotor.setPower(0);
